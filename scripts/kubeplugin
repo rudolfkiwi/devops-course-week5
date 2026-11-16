@@ -1,0 +1,40 @@
+#!/bin/bash
+
+# Define command-line arguments
+
+NAMESPACE=$1
+RESOURCE_TYPE=$2
+
+if
+  [[ -z "$1" ]]; then
+    echo "Namespace is not provided!"
+    echo "Usage: kubectl stat <namespace> <resource>"
+    exit 1
+fi
+
+if
+  [[ -z "$2" ]]; then
+    echo "Resource is not provided!"
+    echo "Usage: kubectl stat <namespace> <resource>"
+    exit 1
+fi
+
+# Retrieve resource usage statistics from Kubernetes
+kubectl top $RESOURCE_TYPE -n $1 | tail -n +2 | while read -r line
+do
+  # Extract CPU and memory usage from the output
+  NAME=$(echo $line | awk '{print $1}')
+  CPU=$(echo $line | awk '{print $2}')
+  MEMORY_POD=$(echo $line | awk '{print $3}')
+  MEMORY_NODE=$(echo $line | awk '{print $4}')
+  MEMORY_NODE_PERCENT=$(echo $line | awk '{print $5}')
+  CPU_NODE_PERCENT=$(echo $line | awk '{print $3}')
+
+  # Output the statistics to the console
+  if
+    [[ "$RESOURCE_TYPE" == "node" || "$RESOURCE_TYPE" == "nodes" ]]; then
+      echo "$RESOURCE_TYPE, $NAME, $CPU, $MEMORY_NODE, $MEMORY_NODE_PERCENT, $CPU_NODE_PERCENT";
+  else
+    echo "$RESOURCE_TYPE, $NAMESPACE, $NAME, $CPU, $MEMORY_POD"
+  fi
+done
